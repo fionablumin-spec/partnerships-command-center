@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Partnerships Command Center</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f7f6f3; color: #1a1a1a; padding: 20px 24px; }
+
+/* Header */
+.header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; }
+.header h1 { font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.q3-tag { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 5px; background: #dbeafe; color: #1d4ed8; }
+.header-meta { font-size: 11px; color: #999; margin-top: 3px; }
+.refresh-btn { font-size: 12px; color: #555; background: white; border: 0.5px solid #ddd; border-radius: 7px; padding: 6px 12px; cursor: pointer; white-space: nowrap; }
+.refresh-btn:hover { background: #f3f3f1; }
+
+/* KPI row */
+.kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+.kpi { background: white; border: 0.5px solid #e5e3de; border-radius: 10px; padding: 14px 16px; }
+.kpi-label { font-size: 10px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 7px; }
+.kpi-val { font-size: 24px; font-weight: 600; line-height: 1; color: #111; }
+.kpi-denom { font-size: 15px; font-weight: 400; color: #bbb; }
+.kpi-sub { font-size: 11px; color: #aaa; margin-top: 5px; }
+.bar-track { height: 4px; background: #eee; border-radius: 3px; margin-top: 8px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; transition: width .4s; }
+
+/* Filter bar */
+.filter-bar { background: white; border: 0.5px solid #e5e3de; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.filter-group { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.filter-label { font-size: 11px; color: #aaa; font-weight: 500; margin-right: 2px; white-space: nowrap; }
+.flt-btn { font-size: 11px; padding: 4px 10px; border-radius: 20px; border: 0.5px solid #e0deda; background: #fafaf8; color: #666; cursor: pointer; transition: all .15s; white-space: nowrap; }
+.flt-btn:hover { border-color: #ccc; color: #333; }
+.flt-btn.active { background: #1a1a1a; color: white; border-color: #1a1a1a; }
+.filter-divider { width: 0.5px; height: 20px; background: #eee; }
+.flt-result { font-size: 11px; color: #aaa; margin-left: auto; }
+
+/* Pipeline */
+.section-label { font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
+.pipeline-cols { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+.pcol { background: white; border: 0.5px solid #e5e3de; border-radius: 10px; padding: 12px; }
+.pcol-hd { display: flex; align-items: center; justify-content: space-between; padding-bottom: 10px; border-bottom: 0.5px solid #f0efec; margin-bottom: 8px; }
+.pcol-title { font-size: 12px; font-weight: 500; color: #444; display: flex; align-items: center; gap: 6px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.pcol-cnt { font-size: 11px; color: #aaa; background: #f3f3f0; border-radius: 10px; padding: 2px 8px; }
+
+/* Partner cards */
+.pcard { border: 0.5px solid #e5e3de; border-radius: 8px; margin-bottom: 7px; border-left: 3px solid; overflow: hidden; background: #fafaf8; }
+.pcard:last-child { margin-bottom: 0; }
+.pcard-amber { border-left-color: #EF9F27; }
+.pcard-green { border-left-color: #1D9E75; }
+.pcard-blue { border-left-color: #378ADD; }
+.pcard-gray { border-left-color: #ccc; }
+.pcard-hd { padding: 9px 11px; cursor: pointer; display: flex; align-items: flex-start; gap: 6px; user-select: none; }
+.pcard-hd:hover { background: rgba(0,0,0,.02); }
+.pcard-name { font-size: 13px; font-weight: 500; color: #111; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.pcard-meta { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 3px; }
+.meta-tag { font-size: 10px; padding: 1px 6px; border-radius: 4px; background: #f0efec; color: #666; }
+.ce-tag { background: #ede9fe; color: #5b21b6; }
+.meta-rev { font-size: 10px; color: #1D9E75; font-weight: 500; }
+.nn-badge { font-size: 10px; font-weight: 500; padding: 1px 6px; border-radius: 4px; background: #dbeafe; color: #1d4ed8; white-space: nowrap; }
+.chev { font-size: 9px; color: #ccc; transition: transform .2s; margin-top: 2px; flex-shrink: 0; }
+.chev.open { transform: rotate(180deg); }
+
+.pcard-body { padding: 0 11px 10px; border-top: 0.5px solid #f0efec; display: none; }
+.pcard-body.open { display: block; padding-top: 8px; }
+.detail { display: flex; align-items: flex-start; gap: 6px; font-size: 11px; margin-bottom: 5px; }
+.dlabel { color: #aaa; width: 80px; flex-shrink: 0; }
+.dval { color: #333; flex: 1; }
+.notion-link { font-size: 11px; color: #378ADD; text-decoration: none; display: inline-block; margin-top: 4px; }
+.notion-link:hover { text-decoration: underline; }
+.empty-col { font-size: 12px; color: #ccc; text-align: center; padding: 16px 0; }
+
+/* Breakdowns */
+.breakdown-row { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 10px; margin-bottom: 16px; }
+.bcard { background: white; border: 0.5px solid #e5e3de; border-radius: 10px; padding: 14px 16px; }
+.chart-wrap { position: relative; height: 130px; margin: 8px 0; }
+.legend { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.leg-row { display: flex; align-items: center; font-size: 12px; }
+.leg-dot { display: block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; flex-shrink: 0; }
+.leg-row span { flex: 1; color: #555; }
+.leg-row strong { color: #111; font-weight: 600; }
+
+/* Net new tracking */
+.nn-progress { height: 8px; background: #eee; border-radius: 4px; overflow: hidden; margin: 10px 0 6px; }
+.nn-bar { height: 100%; background: #378ADD; border-radius: 4px; transition: width .4s; }
+.nn-stat { font-size: 22px; font-weight: 600; color: #111; }
+.nn-goal { font-size: 12px; color: #aaa; margin-top: 2px; }
+.nn-list { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
+.nn-item { display: flex; justify-content: space-between; font-size: 11px; padding: 5px 8px; background: #f7f6f3; border-radius: 6px; }
+.nn-item-name { font-weight: 500; color: #333; }
+.nn-item-date { color: #aaa; }
+
+/* Events table */
+.events-card { background: white; border: 0.5px solid #e5e3de; border-radius: 10px; padding: 16px; overflow-x: auto; }
+.etable { width: 100%; border-collapse: collapse; font-size: 12px; }
+.etable th { text-align: left; font-size: 10px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: .05em; padding: 0 10px 8px 0; border-bottom: 0.5px solid #eee; }
+.etable td { padding: 8px 10px 8px 0; border-bottom: 0.5px solid #f5f4f1; vertical-align: middle; }
+.etable tr:last-child td { border-bottom: none; }
+.type-badge { font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 4px; display: inline-block; white-space: nowrap; }
+.status-badge { font-size: 10px; padding: 2px 7px; border-radius: 4px; display: inline-block; }
+.status-confirmed { background: #dcfce7; color: #15803d; }
+.status-tentative { background: #fef9c3; color: #854d0e; }
+.status-cancelled { background: #fee2e2; color: #991b1b; }
+.sponsored-yes { color: #1D9E75; font-weight: 600; }
+.sponsored-no { color: #ddd; }
+
+.loading { text-align: center; padding: 4rem; color: #999; font-size: 14px; }
+.loader { width: 20px; height: 20px; border: 2px solid #eee; border-top-color: #888; border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div id="app"><div class="loading"><div class="loader"></div>Loading...</div></div>
+
+<script>
+const Q3_REV_GOAL = 15000;
+const Q3_EVENTS_GOAL = 3;
+const Q3_PROSPECTS_GOAL = 4;
+const NET_NEW_CUTOFF = new Date('2026-07-01T00:00:00Z');
+const PARTNERS_DS = 'collection://41069ad2-d581-82c1-9fa3-07babd4a8cad';
+const EVENTS_DS   = 'collection://a2c57a42-d150-4122-8d49-6171df042081';
+
+let allPartners = [], allEvents = [];
+let filters = { type: 'all', status: 'all', ce: 'all', sponsorType: 'all' };
+let evtFilters = { sponsored: 'all', quarter: 'all', status: 'all' };
+let _stypes = []; // populated from data
+let expanded = new Set();
+let charts = [];
+
+// ── helpers ──────────────────────────────────────────────────────────
+function pct(a, b) { return b ? Math.min(100, Math.round(a / b * 100)) : 0; }
+
+function fmtMoney(n) {
+  if (!n && n !== 0) return '—';
+  return '$' + Math.round(n).toLocaleString();
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  try { return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+  catch { return d; }
+}
+
+function isNetNew(p) {
+  const d = p['date:First Engagement Date:start'];
+  return d && new Date(d) >= NET_NEW_CUTOFF;
+}
+
+function statusGroup(s) {
+  if (!s) return 'unknown';
+  if (s.includes('Progress')) return 'progress';
+  if (s.includes('Signed')) return 'signed';
+  return 'unknown';
+}
+
+function partnerType(p) {
+  const v = p['Alliance / Revenue Generator'] || '';
+  if (v.includes('Revenue')) return 'revenue';
+  if (v.includes('Co-marketing')) return 'comarketing';
+  return 'alliance';
+}
+
+function isCE(p) { return p['CE Partner?'] === '__YES__'; }
+
+function parseCats(p) {
+  const v = p['Industry Category Focus'];
+  if (!v) return [];
+  if (Array.isArray(v)) return v;
+  try { return JSON.parse(v); } catch { return [v]; }
+}
+
+function cardColor(sg) {
+  if (sg === 'progress') return 'amber';
+  if (sg === 'signed') return 'green';
+  if (sg === 'alliance') return 'blue';
+  return 'gray';
+}
+
+// ── filtering ─────────────────────────────────────────────────────────
+function applyFilters(partners) {
+  return partners.filter(p => {
+    if (filters.type !== 'all' && partnerType(p) !== filters.type) return false;
+    if (filters.status !== 'all' && statusGroup(p['Agreement Status']) !== filters.status) return false;
+    if (filters.ce === 'ce' && !isCE(p)) return false;
+    if (filters.ce === 'nonce' && isCE(p)) return false;
+    if (filters.sponsorType !== 'all' && (p['Sponsorship Type'] || '') !== filters.sponsorType) return false;
+    return true;
+  });
+}
+
+function setFilter(dim, val) {
+  filters[dim] = val;
+  document.querySelectorAll('[data-f]').forEach(btn => {
+    const attr = btn.getAttribute('data-f');
+    const colon = attr.indexOf(':');
+    const d = attr.slice(0, colon);
+    const v = attr.slice(colon + 1);
+    let isActive;
+    if (d === 'stype') {
+      // v is an index into _stypes; compare by resolved value
+      isActive = (d === dim || d === 'stype' && dim === 'sponsorType')
+        ? (v === 'all' ? val === 'all' : _stypes[+v] === val)
+        : filters.sponsorType === (v === 'all' ? 'all' : _stypes[+v]);
+    } else {
+      isActive = d === dim ? v === val : filters[d] === v;
+    }
+    btn.classList.toggle('active', isActive);
+  });
+  renderPipeline();
+}
+
+// ── pipeline render ────────────────────────────────────────────────────
+function toggle(id) {
+  expanded.has(id) ? expanded.delete(id) : expanded.add(id);
+  const body = document.getElementById('b-' + id);
+  const chev = document.getElementById('c-' + id);
+  if (body) body.classList.toggle('open', expanded.has(id));
+  if (chev) chev.classList.toggle('open', expanded.has(id));
+}
+
+function renderCard(p) {
+  const sg = statusGroup(p['Agreement Status']);
+  const nn = isNetNew(p);
+  const ce = isCE(p);
+  const id = (p.id || p.url || '').replace(/[^a-z0-9]/gi, '');
+  const isOpen = expanded.has(id);
+  const color = cardColor(sg);
+
+  const tier = p['Sponsorship Tier'] || '';
+  const rev = p['Q3 Realized Revenue'];
+  const cats = parseCats(p);
+  const ptLabel = p['Alliance / Revenue Generator'] || '';
+  const spType = p['Sponsorship Type'] || '';
+  const engDate = p['date:First Engagement Date:start'];
+
+  const tags = [];
+  if (tier) tags.push(`<span class="meta-tag">${tier}</span>`);
+  if (ce) tags.push(`<span class="meta-tag ce-tag">CE</span>`);
+  if (rev) tags.push(`<span class="meta-rev">${fmtMoney(rev)} closed</span>`);
+
+  const bodyRows = [
+    cats.length ? `<div class="detail"><span class="dlabel">Category</span><span class="dval">${cats.join(', ')}</span></div>` : '',
+    ptLabel ? `<div class="detail"><span class="dlabel">Type</span><span class="dval">${ptLabel}</span></div>` : '',
+    spType ? `<div class="detail"><span class="dlabel">Sponsorship</span><span class="dval">${spType}</span></div>` : '',
+    p['H2 2026 Revenue Goals'] ? `<div class="detail"><span class="dlabel">H2 goal</span><span class="dval">${fmtMoney(p['H2 2026 Revenue Goals'])}</span></div>` : '',
+    engDate ? `<div class="detail"><span class="dlabel">First engaged</span><span class="dval">${fmtDate(engDate)}</span></div>` : '',
+  ].filter(Boolean).join('');
+
+  return `<div class="pcard pcard-${color}">
+    <div class="pcard-hd" onclick="toggle('${id}')">
+      <div style="flex:1;min-width:0">
+        <div class="pcard-name">${p.Partner || '—'}${nn ? '<span class="nn-badge">Net new</span>' : ''}</div>
+        ${tags.length ? `<div class="pcard-meta">${tags.join('')}</div>` : ''}
+      </div>
+      <span class="chev${isOpen ? ' open' : ''}" id="c-${id}">▾</span>
+    </div>
+    ${bodyRows || p.url ? `<div class="pcard-body${isOpen ? ' open' : ''}" id="b-${id}">${bodyRows}${p.url ? `<a class="notion-link" href="${p.url}" target="_blank">Open in Notion ↗</a>` : ''}</div>` : ''}
+  </div>`;
+}
+
+function renderCol(title, dotColor, list) {
+  return `<div class="pcol">
+    <div class="pcol-hd">
+      <span class="pcol-title"><span class="dot" style="background:${dotColor}"></span>${title}</span>
+      <span class="pcol-cnt">${list.length}</span>
+    </div>
+    ${list.length ? list.map(renderCard).join('') : '<div class="empty-col">None</div>'}
+  </div>`;
+}
+
+function renderPipeline() {
+  const filtered = applyFilters(allPartners);
+  const inProgress = filtered.filter(p => statusGroup(p['Agreement Status']) === 'progress');
+  const signed     = filtered.filter(p => statusGroup(p['Agreement Status']) === 'signed');
+  document.getElementById('pipeline').innerHTML =
+    renderCol('In Progress', '#EF9F27', inProgress) +
+    renderCol('Signed / Active', '#1D9E75', signed);
+  document.getElementById('flt-count').textContent = `${filtered.length} partner${filtered.length !== 1 ? 's' : ''}`;
+}
+
+// ── event helpers ─────────────────────────────────────────────────────
+function eventQuarter(e) {
+  const d = e['date:Start Date:start'];
+  if (!d) return null;
+  const m = new Date(d).getUTCMonth();
+  if (m < 3) return 'Q1';
+  if (m < 6) return 'Q2';
+  if (m < 9) return 'Q3';
+  return 'Q4';
+}
+
+function applyEvtFilters(events) {
+  return events.filter(e => {
+    if (evtFilters.sponsored === 'yes' && e['Sponsored'] !== '__YES__') return false;
+    if (evtFilters.sponsored === 'no'  && e['Sponsored'] === '__YES__') return false;
+    if (evtFilters.quarter !== 'all' && eventQuarter(e) !== evtFilters.quarter) return false;
+    if (evtFilters.status !== 'all' && (e['Status'] || '') !== evtFilters.status) return false;
+    return true;
+  });
+}
+
+function setEvtFilter(dim, val) {
+  evtFilters[dim] = val;
+  document.querySelectorAll('[data-ef]').forEach(btn => {
+    const attr = btn.getAttribute('data-ef');
+    const colon = attr.indexOf(':');
+    const d = attr.slice(0, colon);
+    const v = attr.slice(colon + 1);
+    btn.classList.toggle('active', d === dim ? v === val : evtFilters[d] === v);
+  });
+  renderEvents();
+}
+
+function renderEvents() {
+  const filtered = applyEvtFilters(allEvents);
+  const sorted = [...filtered].sort((a, b) => {
+    const da = a['date:Start Date:start'] ? new Date(a['date:Start Date:start']) : new Date(0);
+    const db = b['date:Start Date:start'] ? new Date(b['date:Start Date:start']) : new Date(0);
+    return db - da;
+  });
+  const sponsoredCount = filtered.filter(e => e['Sponsored'] === '__YES__').length;
+  const countEl = document.getElementById('evt-count');
+  if (countEl) countEl.textContent = `${filtered.length} event${filtered.length !== 1 ? 's' : ''} · ${sponsoredCount} sponsored`;
+
+  const container = document.getElementById('events-table');
+  if (!container) return;
+  if (!filtered.length) {
+    container.innerHTML = '<div class="events-card"><div style="text-align:center;padding:24px;color:#bbb;font-size:13px">No events match these filters</div></div>';
+    return;
+  }
+  container.innerHTML = `<div class="events-card"><table class="etable">
+    <thead><tr><th>Event</th><th>Type</th><th>Date</th><th>Location</th><th>Sponsor</th><th>Status</th></tr></thead>
+    <tbody>${sorted.map(e => {
+      const sponsored = e['Sponsored'] === '__YES__';
+      let sponsors = [];
+      try { sponsors = JSON.parse(e['Sponsor'] || '[]'); } catch {}
+      const typeCfg = {
+        'CE Event':           { bg: '#dcfce7', color: '#15803d' },
+        'CE Networking Event':{ bg: '#ede9fe', color: '#5b21b6' },
+        'Live Webinar':       { bg: '#dbeafe', color: '#1d4ed8' }
+      }[e['Type']] || { bg: '#f3f3f0', color: '#555' };
+      const stClass = { 'Confirmed': 'confirmed', 'Tentative': 'tentative', 'Cancelled': 'cancelled' }[e['Status'] || ''] || '';
+      return `<tr>
+        <td style="font-weight:500">${e['Event Name'] || '—'}</td>
+        <td><span class="type-badge" style="background:${typeCfg.bg};color:${typeCfg.color}">${e['Type'] || '—'}</span></td>
+        <td style="color:#888;white-space:nowrap">${fmtDate(e['date:Start Date:start']) || '—'}</td>
+        <td style="color:#888">${[e['City'], e['State']].filter(Boolean).join(', ') || '—'}</td>
+        <td class="${sponsored ? 'sponsored-yes' : 'sponsored-no'}">${sponsored && sponsors.length ? sponsors.join(', ') : sponsored ? '✓' : '—'}</td>
+        <td>${stClass ? `<span class="status-badge status-${stClass}">${e['Status']}</span>` : '—'}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+// ── main load ──────────────────────────────────────────────────────────
+async function load() {
+  document.getElementById('app').innerHTML = '<div class="loading"><div class="loader"></div>Loading...</div>';
+  charts.forEach(c => c.destroy());
+  charts = [];
+
+  try {
+    const [pRes, eRes] = await Promise.all([
+      window.cowork.callMcpTool('mcp__118266ea-e20c-49c3-8fa8-87c71dc35b38__notion-query-data-sources',
+        { data: { data_source_urls: [PARTNERS_DS], query: `SELECT * FROM "${PARTNERS_DS}"` } }),
+      window.cowork.callMcpTool('mcp__118266ea-e20c-49c3-8fa8-87c71dc35b38__notion-query-data-sources',
+        { data: { data_source_urls: [EVENTS_DS], query: `SELECT * FROM "${EVENTS_DS}" WHERE "Type" = 'CE Event' OR "Type" = 'CE Networking Event' OR "Type" = 'Live Webinar'` } })
+    ]);
+
+    allPartners = (pRes.structuredContent ?? JSON.parse(pRes.content[0].text)).results || [];
+    allEvents   = (eRes.structuredContent ?? JSON.parse(eRes.content[0].text)).results || [];
+    _stypes = [...new Set(allPartners.map(p => p['Sponsorship Type']).filter(Boolean))].sort();
+
+    // KPIs
+    const q3Rev          = allPartners.reduce((s, p) => s + (p['Q3 Realized Revenue'] || 0), 0);
+    const today = new Date(); today.setUTCHours(0,0,0,0);
+    const upcomingEvents = allEvents.filter(e => e['date:Start Date:start'] && new Date(e['date:Start Date:start']) >= today);
+    const sponsoredEvts  = allEvents.filter(e => e['Sponsored'] === '__YES__' && eventQuarter(e) === 'Q3').length;
+    const netNewList     = allPartners.filter(isNetNew);
+    const inProgressAll = allPartners.filter(p => statusGroup(p['Agreement Status']) === 'progress');
+    const signedAll     = allPartners.filter(p => statusGroup(p['Agreement Status']) === 'signed');
+
+    const revPct = pct(q3Rev, Q3_REV_GOAL);
+    const evtPct = pct(sponsoredEvts, Q3_EVENTS_GOAL);
+    const nnPct  = pct(netNewList.length, Q3_PROSPECTS_GOAL);
+
+    // Breakdowns
+    const revPartners  = allPartners.filter(p => partnerType(p) === 'revenue');
+    const allPartners2 = allPartners.filter(p => partnerType(p) === 'alliance');
+    const coMktPartners= allPartners.filter(p => partnerType(p) === 'comarketing');
+    const cePartners   = allPartners.filter(isCE);
+    const nonCE        = allPartners.filter(p => !isCE(p));
+
+    const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+
+    document.getElementById('app').innerHTML = `
+      <div class="header">
+        <div>
+          <h1>Partnerships Command Center <span class="q3-tag">Q3 2026</span></h1>
+          <div class="header-meta">Refreshed ${now} · ${allPartners.length} partners · ${upcomingEvents.length} upcoming CE events</div>
+        </div>
+        <button class="refresh-btn" onclick="load()">↻ Refresh</button>
+      </div>
+
+      <div class="kpi-row">
+        <div class="kpi">
+          <div class="kpi-label">Q3 Revenue Realized</div>
+          <div class="kpi-val">${fmtMoney(q3Rev)}</div>
+          <div class="kpi-sub">Goal: ${fmtMoney(Q3_REV_GOAL)} · ${revPct}%</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${revPct}%;background:#1D9E75"></div></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">CE Events Sponsored (Q3)</div>
+          <div class="kpi-val">${sponsoredEvts}<span class="kpi-denom"> / ${Q3_EVENTS_GOAL}</span></div>
+          <div class="kpi-sub">${upcomingEvents.length} upcoming CE events</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${evtPct}%;background:#EF9F27"></div></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Pipeline</div>
+          <div class="kpi-val">${inProgressAll.length + signedAll.length}</div>
+          <div class="kpi-sub">${inProgressAll.length} in progress · ${signedAll.length} signed</div>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <div class="filter-group">
+          <span class="filter-label">Type</span>
+          <button class="flt-btn active" data-f="type:all"        onclick="setFilter('type','all')">All</button>
+          <button class="flt-btn"        data-f="type:revenue"    onclick="setFilter('type','revenue')">Revenue Generator</button>
+          <button class="flt-btn"        data-f="type:alliance"   onclick="setFilter('type','alliance')">Alliance / Strategic</button>
+          <button class="flt-btn"        data-f="type:comarketing" onclick="setFilter('type','comarketing')">Co-marketing</button>
+        </div>
+        <div class="filter-divider"></div>
+        <div class="filter-group">
+          <span class="filter-label">Status</span>
+          <button class="flt-btn active" data-f="status:all"      onclick="setFilter('status','all')">All</button>
+          <button class="flt-btn"        data-f="status:signed"   onclick="setFilter('status','signed')">Signed</button>
+          <button class="flt-btn"        data-f="status:progress" onclick="setFilter('status','progress')">In Progress</button>
+        </div>
+        <div class="filter-divider"></div>
+        <div class="filter-group">
+          <span class="filter-label">CE</span>
+          <button class="flt-btn active" data-f="ce:all"    onclick="setFilter('ce','all')">All</button>
+          <button class="flt-btn"        data-f="ce:ce"     onclick="setFilter('ce','ce')">CE Partner</button>
+          <button class="flt-btn"        data-f="ce:nonce"  onclick="setFilter('ce','nonce')">Non-CE</button>
+        </div>
+        ${_stypes.length ? `<div class="filter-divider"></div>
+        <div class="filter-group">
+          <span class="filter-label">Sponsorship</span>
+          <button class="flt-btn active" data-f="stype:all" onclick="setFilter('sponsorType','all')">All</button>
+          ${_stypes.map((t, i) => `<button class="flt-btn" data-f="stype:${i}" onclick="setFilter('sponsorType',_stypes[${i}])">${t}</button>`).join('')}
+        </div>` : ''}
+        <span class="flt-result" id="flt-count">${allPartners.length} partners</span>
+      </div>
+
+      <div class="breakdown-row">
+        <div class="bcard">
+          <div class="section-label">Revenue vs. Alliance mix</div>
+          <div class="chart-wrap"><canvas id="donut-type"></canvas></div>
+          <div class="legend">
+            <div class="leg-row"><span style="display:inline-block;flex:none;min-width:10px;min-height:10px;width:10px;height:10px;border-radius:50%;background:#1D9E75;flex-shrink:0;margin-right:8px"></span><span>Revenue Generator</span><strong>${revPartners.length}</strong></div>
+            <div class="leg-row"><span style="display:inline-block;flex:none;min-width:10px;min-height:10px;width:10px;height:10px;border-radius:50%;background:#378ADD;flex-shrink:0;margin-right:8px"></span><span>Alliance / Strategic</span><strong>${allPartners2.length}</strong></div>
+            <div class="leg-row"><span style="display:inline-block;flex:none;min-width:10px;min-height:10px;width:10px;height:10px;border-radius:50%;background:#EF9F27;flex-shrink:0;margin-right:8px"></span><span>Co-marketing</span><strong>${coMktPartners.length}</strong></div>
+          </div>
+        </div>
+        <div class="bcard">
+          <div class="section-label">CE vs. Non-CE partners</div>
+          <div class="chart-wrap"><canvas id="donut-ce"></canvas></div>
+          <div class="legend">
+            <div class="leg-row"><span style="display:inline-block;flex:none;min-width:10px;min-height:10px;width:10px;height:10px;border-radius:50%;background:#8B5CF6;flex-shrink:0;margin-right:8px"></span><span>CE Partner</span><strong>${cePartners.length}</strong></div>
+            <div class="leg-row"><span style="display:inline-block;flex:none;min-width:10px;min-height:10px;width:10px;height:10px;border-radius:50%;background:#D1D5DB;flex-shrink:0;margin-right:8px"></span><span>Non-CE</span><strong>${nonCE.length}</strong></div>
+          </div>
+        </div>
+        <div class="bcard">
+          <div class="section-label">Net new partner tracking</div>
+          <div style="margin-top:6px">
+            <div class="nn-stat">${netNewList.length}<span style="font-size:14px;font-weight:400;color:#aaa"> / ${Q3_PROSPECTS_GOAL} goal</span></div>
+            <div class="nn-goal">New partnerships started after Jun 30</div>
+            <div class="nn-progress"><div class="nn-bar" style="width:${nnPct}%"></div></div>
+            ${netNewList.length
+              ? `<div class="nn-list">${netNewList.map(p => `<div class="nn-item"><span class="nn-item-name">${p.Partner}</span><span class="nn-item-date">${fmtDate(p['date:First Engagement Date:start'])}</span></div>`).join('')}</div>`
+              : `<div style="font-size:11px;color:#bbb;margin-top:10px">None yet — fill in First Engagement Date in Notion for Q3 contacts</div>`}
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">Partner pipeline</div>
+      <div id="pipeline" class="pipeline-cols"></div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;margin-bottom:10px">
+        <div class="section-label" style="margin:0">CE events calendar</div>
+        <span id="evt-count" style="font-size:11px;color:#aaa"></span>
+      </div>
+      <div class="filter-bar" style="margin-bottom:10px">
+        <div class="filter-group">
+          <span class="filter-label">Sponsored</span>
+          <button class="flt-btn active" data-ef="sponsored:all" onclick="setEvtFilter('sponsored','all')">All</button>
+          <button class="flt-btn" data-ef="sponsored:yes" onclick="setEvtFilter('sponsored','yes')">Sponsored</button>
+          <button class="flt-btn" data-ef="sponsored:no"  onclick="setEvtFilter('sponsored','no')">Not sponsored</button>
+        </div>
+        <div class="filter-divider"></div>
+        <div class="filter-group">
+          <span class="filter-label">Quarter</span>
+          <button class="flt-btn active" data-ef="quarter:all" onclick="setEvtFilter('quarter','all')">All</button>
+          <button class="flt-btn" data-ef="quarter:Q1" onclick="setEvtFilter('quarter','Q1')">Q1</button>
+          <button class="flt-btn" data-ef="quarter:Q2" onclick="setEvtFilter('quarter','Q2')">Q2</button>
+          <button class="flt-btn" data-ef="quarter:Q3" onclick="setEvtFilter('quarter','Q3')">Q3</button>
+          <button class="flt-btn" data-ef="quarter:Q4" onclick="setEvtFilter('quarter','Q4')">Q4</button>
+        </div>
+        <div class="filter-divider"></div>
+        <div class="filter-group">
+          <span class="filter-label">Status</span>
+          <button class="flt-btn active" data-ef="status:all"       onclick="setEvtFilter('status','all')">All</button>
+          <button class="flt-btn" data-ef="status:Confirmed"  onclick="setEvtFilter('status','Confirmed')">Confirmed</button>
+          <button class="flt-btn" data-ef="status:Tentative"  onclick="setEvtFilter('status','Tentative')">Tentative</button>
+          <button class="flt-btn" data-ef="status:Cancelled"  onclick="setEvtFilter('status','Cancelled')">Cancelled</button>
+        </div>
+      </div>
+      <div id="events-table"></div>
+    `;
+
+    renderPipeline();
+    renderEvents();
+
+    charts.push(new Chart(document.getElementById('donut-type'), {
+      type: 'doughnut',
+      data: { labels: ['Revenue Generator', 'Alliance / Strategic', 'Co-marketing'],
+        datasets: [{ data: [revPartners.length, allPartners2.length, coMktPartners.length],
+          backgroundColor: ['#1D9E75', '#378ADD', '#EF9F27'], borderWidth: 2, borderColor: '#fff', hoverOffset: 4 }] },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '65%',
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw}` } } } }
+    }));
+
+    charts.push(new Chart(document.getElementById('donut-ce'), {
+      type: 'doughnut',
+      data: { labels: ['CE Partner', 'Non-CE'],
+        datasets: [{ data: [cePartners.length, nonCE.length],
+          backgroundColor: ['#8B5CF6', '#D1D5DB'], borderWidth: 2, borderColor: '#fff', hoverOffset: 4 }] },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '65%',
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw}` } } } }
+    }));
+
+  } catch(err) {
+    document.getElementById('app').innerHTML = `<div class="loading">Failed to load data.<br><button onclick="load()" style="margin-top:12px;cursor:pointer;padding:6px 14px">Retry</button></div>`;
+    console.error(err);
+  }
+}
+
+load();
+</script>
+</body>
+</html>
