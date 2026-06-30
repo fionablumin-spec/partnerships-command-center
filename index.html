@@ -364,14 +364,12 @@ async function load() {
 
   try {
     const [pRes, eRes] = await Promise.all([
-      window.cowork.callMcpTool('mcp__118266ea-e20c-49c3-8fa8-87c71dc35b38__notion-query-data-sources',
-        { data: { data_source_urls: [PARTNERS_DS], query: `SELECT * FROM "${PARTNERS_DS}"` } }),
-      window.cowork.callMcpTool('mcp__118266ea-e20c-49c3-8fa8-87c71dc35b38__notion-query-data-sources',
-        { data: { data_source_urls: [EVENTS_DS], query: `SELECT * FROM "${EVENTS_DS}" WHERE "Type" = 'CE Event' OR "Type" = 'CE Networking Event' OR "Type" = 'Live Webinar'` } })
+      fetch('/api/partners').then(r => { if (!r.ok) throw new Error('Partners API error'); return r.json(); }),
+      fetch('/api/events').then(r => { if (!r.ok) throw new Error('Events API error'); return r.json(); }),
     ]);
 
-    allPartners = (pRes.structuredContent ?? JSON.parse(pRes.content[0].text)).results || [];
-    allEvents   = (eRes.structuredContent ?? JSON.parse(eRes.content[0].text)).results || [];
+    allPartners = pRes.results || [];
+    allEvents   = eRes.results || [];
     _stypes = [...new Set(allPartners.map(p => p['Sponsorship Type']).filter(Boolean))].sort();
 
     // KPIs
