@@ -12,7 +12,7 @@ const FILTER = {
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate');
+  res.setHeader('Cache-Control', 'no-store');
   try {
     const results = await queryDatabase(DB_ID, FILTER);
     res.json({ results });
