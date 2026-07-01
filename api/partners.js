@@ -1,6 +1,6 @@
 const { queryDatabase } = require('./_notion');
 
-const DB_ID = '41069ad2-d581-82c1-9fa3-07babd4a8cad';
+const DB_ID = '5b369ad2-d581-83c4-b2a0-81078546b6e1';
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');

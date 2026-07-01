@@ -1,6 +1,6 @@
 const { queryDatabase } = require('./_notion');
 
-const DB_ID = 'a2c57a42-d150-4122-8d49-6171df042081';
+const DB_ID = 'b3fab4b8-b530-443c-a3b7-5282ff370087';
 
 const FILTER = {
   or: [
