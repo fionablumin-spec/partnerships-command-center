@@ -126,7 +126,7 @@ const EVENTS_DS   = 'collection://a2c57a42-d150-4122-8d49-6171df042081';
 
 let allPartners = [], allEvents = [];
 let filters = { type: 'all', status: 'all', ce: 'all', sponsorType: 'all' };
-let evtFilters = { sponsored: 'all', quarter: 'all', status: 'all' };
+let evtFilters = { sponsored: 'all', quarter: 'all', status: 'all', timing: 'all' };
 let _stypes = []; // populated from data
 let expanded = new Set();
 let charts = [];
@@ -299,6 +299,12 @@ function applyEvtFilters(events) {
     if (evtFilters.sponsored === 'no'  && e['Sponsored'] === '__YES__') return false;
     if (evtFilters.quarter !== 'all' && eventQuarter(e) !== evtFilters.quarter) return false;
     if (evtFilters.status !== 'all' && (e['Status'] || '') !== evtFilters.status) return false;
+    if (evtFilters.timing !== 'all') {
+      const d = e['date:Start Date:start'];
+      const isPast = d && new Date(d) < new Date(new Date().toDateString());
+      if (evtFilters.timing === 'past' && !isPast) return false;
+      if (evtFilters.timing === 'future' && isPast) return false;
+    }
     return true;
   });
 }
@@ -511,10 +517,15 @@ async function load() {
         <div class="filter-divider"></div>
         <div class="filter-group">
           <span class="filter-label">Status</span>
-          <button class="flt-btn active" data-ef="status:all"       onclick="setEvtFilter('status','all')">All</button>
-          <button class="flt-btn" data-ef="status:Confirmed"  onclick="setEvtFilter('status','Confirmed')">Confirmed</button>
-          <button class="flt-btn" data-ef="status:Tentative"  onclick="setEvtFilter('status','Tentative')">Tentative</button>
-          <button class="flt-btn" data-ef="status:Cancelled"  onclick="setEvtFilter('status','Cancelled')">Cancelled</button>
+          <button class="flt-btn active" data-ef="status:all"      onclick="setEvtFilter('status','all')">All</button>
+          <button class="flt-btn" data-ef="status:Confirmed" onclick="setEvtFilter('status','Confirmed')">Confirmed</button>
+        </div>
+        <div class="filter-divider"></div>
+        <div class="filter-group">
+          <span class="filter-label">Timing</span>
+          <button class="flt-btn active" data-ef="timing:all"    onclick="setEvtFilter('timing','all')">All</button>
+          <button class="flt-btn" data-ef="timing:future" onclick="setEvtFilter('timing','future')">Future</button>
+          <button class="flt-btn" data-ef="timing:past"   onclick="setEvtFilter('timing','past')">Past</button>
         </div>
       </div>
       <div id="events-table"></div>
