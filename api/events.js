@@ -6,7 +6,8 @@ const FILTER = {
   or: [
     { property: 'Type', select: { equals: 'CE Event' } },
     { property: 'Type', select: { equals: 'CE Networking Event' } },
-    { property: 'Type', select: { equals: 'Live Webinar' } },
+    { property: 'Type', select: { equals: 'Live Webinar - CE' } },
+    { property: 'Type', select: { equals: 'Live Webinar - Non CE' } },
   ],
 };
 
