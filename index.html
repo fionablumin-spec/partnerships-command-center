@@ -19,7 +19,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .refresh-btn:hover { background: #f3f3f1; }
 
 /* KPI row */
-.kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
 .kpi { background: white; border: 0.5px solid #e5e3de; border-radius: 10px; padding: 14px 16px; }
 .kpi-label { font-size: 10px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 7px; }
 .kpi-val { font-size: 24px; font-weight: 600; line-height: 1; color: #111; }
@@ -380,6 +380,7 @@ async function load() {
 
     // KPIs
     const q3Rev          = allPartners.reduce((s, p) => s + (p['Q3 Realized Revenue'] || 0), 0);
+    const q3Potential    = allPartners.reduce((s, p) => s + (p['Q3 Revenue Potential'] || 0), 0);
     const today = new Date(); today.setUTCHours(0,0,0,0);
     const upcomingEvents = allEvents.filter(e => e['date:Start Date:start'] && new Date(e['date:Start Date:start']) >= today);
     const sponsoredEvts  = allEvents.filter(e => e['Sponsored'] === '__YES__' && eventQuarter(e) === 'Q3').length;
@@ -388,6 +389,7 @@ async function load() {
     const signedAll     = allPartners.filter(p => statusGroup(p['Agreement Status']) === 'signed');
 
     const revPct = pct(q3Rev, Q3_REV_GOAL);
+    const potPct = pct(q3Potential, Q3_REV_GOAL);
     const evtPct = pct(sponsoredEvts, Q3_EVENTS_GOAL);
     const nnPct  = pct(netNewList.length, Q3_PROSPECTS_GOAL);
 
@@ -411,10 +413,16 @@ async function load() {
 
       <div class="kpi-row">
         <div class="kpi">
-          <div class="kpi-label">Q3 Revenue Realized</div>
+          <div class="kpi-label">Q3 Revenue Closed</div>
           <div class="kpi-val">${fmtMoney(q3Rev)}</div>
           <div class="kpi-sub">Goal: ${fmtMoney(Q3_REV_GOAL)} · ${revPct}%</div>
           <div class="bar-track"><div class="bar-fill" style="width:${revPct}%;background:#1D9E75"></div></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Q3 Revenue Potential</div>
+          <div class="kpi-val">${fmtMoney(q3Potential)}</div>
+          <div class="kpi-sub">Goal: ${fmtMoney(Q3_REV_GOAL)} · ${potPct}%</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${potPct}%;background:#378ADD"></div></div>
         </div>
         <div class="kpi">
           <div class="kpi-label">CE Events Sponsored (Q3)</div>
